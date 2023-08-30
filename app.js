@@ -34,7 +34,8 @@ mongoose.connect('mongodb+srv://admin-zumrud:Test123@cluster0.f14wlq0.mongodb.ne
 const userSchema = new mongoose.Schema({ // create from mongoose Schema class
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -96,11 +97,48 @@ app.get("/register", function(req, res) {
 });
 
 app.get("/secrets", function(req, res) {
+    User.find({ "secret": { $ne: null } })
+        .then((foundUsers) => {
+            if (foundUsers) {
+                res.render("secrets", {
+                    usersWithSecrets: foundUsers
+                });
+            }
+        })
+        .catch((err) => {
+            done(err, null);
+        });
+});
+
+app.get("/submit", function(req, res) {
     if (req.isAuthenticated()) {
-        res.render("secrets");
+        res.render("submit");
     } else {
-        res.redirect("login");
+        res.redirect("/login");
     }
+});
+
+app.post("/submit", function(req, res) {
+    const submittedSecret = req.body.secret;
+    console.log(req.user.id);
+
+    User.findById(req.user.id)
+        .exec() // Add this line to execute the query
+        .then((foundUser) => {
+            if (foundUser) {
+                foundUser.secret = submittedSecret;
+                foundUser.save()
+                    .then(() => {
+                        res.redirect("/secrets");
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    });
+            }
+        })
+        .catch((err) => {
+            done(err, null);
+        });
 });
 
 app.get("/logout", function(req, res) {
