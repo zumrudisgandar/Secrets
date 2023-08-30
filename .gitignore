@@ -1,0 +1,8 @@
+# Directory dependencies
+node_modules
+
+# dotenv environment files
+.env
+
+.DS_Store
+.git
